@@ -1,6 +1,10 @@
 import request from '@/utils/request';
 
-// Интерфейсы
+// Базовый URL для API запросов
+// Используем относительный путь, так как проксирование будет обрабатывать перенаправление
+const API_BASE = '/api';
+
+// Интерфейсы для типизации данных
 export interface InventoryPlanResponse {
   id: number;
   subdivisionName: string;
@@ -12,11 +16,11 @@ export interface InventoryPlanResponse {
 export interface InventoryCalculationRequest {
   subdivisionId: number;
   materialId: number;
-  date: string;
+  date: string; // Формат: "YYYY-MM-DD"
 }
 
 export interface InventoryCalculationResult {
-  date: string;
+  date: string; // Формат: "YYYY-MM-DD"
   inventoryPlan: number;
   salesPlan: number;
   stockNorm: number;
@@ -42,19 +46,17 @@ export interface Material {
   type?: string;
 }
 
-// Базовый URL для API
-const API_BASE = '/api';
+//Сервис для работы с планами запасов
 
-/**
- * Сервис для работы с планами запасов
- */
-
-// Получить все планы запасов (GET метод)
+//Получить все планы запасов (GET метод)
+ 
 export const getInventoryPlans = async (): Promise<InventoryPlanResponse[]> => {
   try {
+    console.log('Запрос всех планов запасов...');
     const response = await request<InventoryPlanResponse[]>(`${API_BASE}/InventoryPlans`, {
       method: 'GET',
     });
+    console.log('Планы запасов получены:', response?.length || 0, 'записей');
     return response || [];
   } catch (error) {
     console.error('Ошибка при получении планов запасов:', error);
@@ -62,75 +64,75 @@ export const getInventoryPlans = async (): Promise<InventoryPlanResponse[]> => {
   }
 };
 
-// Получить все планы запасов (POST метод для совместимости)
-export const getAllInventoryPlans = async (): Promise<InventoryPlanResponse[]> => {
-  try {
-    const response = await request<InventoryPlanResponse[]>(`${API_BASE}/InventoryPlans/getAll`, {
-      method: 'POST',
-    });
-    return response || [];
-  } catch (error) {
-    console.error('Ошибка при получении планов запасов (POST):', error);
-    throw error;
-  }
-};
-
-// Рассчитать план запасов - исправленная версия
+ //Рассчитать план запасов
 export const calculateInventoryPlan = async (
   data: InventoryCalculationRequest
 ): Promise<InventoryCalculationResult> => {
   try {
-    console.log('Отправляем запрос на расчет:', data);
-    
+    console.log('Отправка запроса на расчет плана запасов:', {
+      ...data,
+      requestUrl: `${API_BASE}/InventoryPlans/calculate`,
+    });
+
+    // Валидация данных перед отправкой
+    if (!data.subdivisionId || !data.materialId || !data.date) {
+      throw new Error('Не все обязательные поля заполнены');
+    }
+
+    // Формируем полный URL для диагностики
+    const fullUrl = `${window.location.origin}${API_BASE}/InventoryPlans/calculate`;
+    console.log('Полный URL запроса:', fullUrl);
+
+    // Отправляем запрос
     const response = await request<InventoryCalculationResult>(`${API_BASE}/InventoryPlans/calculate`, {
       method: 'POST',
       data,
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
-    
-    console.log('Ответ от сервера:', response);
+
+    console.log('Успешный ответ от сервера расчета:', response);
     return response;
-  } catch (error: any) {
-    console.error('Ошибка при расчете плана запасов:', error);
     
-    // Добавляем больше информации об ошибке
-    if (error.response) {
-      console.error('Статус ошибки:', error.response.status);
-      console.error('Данные ошибки:', error.response.data);
-      
-      // Создаем структурированную ошибку
-      const apiError = {
-        apiError: {
-          message: error.response.data?.message || 'Ошибка при расчете',
-          status: error.response.status,
-          details: error.response.data?.error || error.response.data,
-        }
-      };
-      throw apiError;
-    } else if (error.request) {
-      console.error('Запрос отправлен, но ответ не получен');
-      throw { apiError: { message: 'Сервер не ответил. Проверьте подключение к серверу.' } };
-    } else {
-      console.error('Ошибка настройки запроса:', error.message);
-      throw { apiError: { message: error.message } };
-    }
+  } catch (error: any) {
+    console.error('Детали ошибки расчета плана запасов:');
+    console.error('Тип ошибки:', error?.constructor?.name);
+    console.error('Сообщение:', error?.message);
+    console.error('Статус:', error?.response?.status);
+    console.error('Данные ошибки:', error?.response?.data);
+    console.error('Полная ошибка:', error);
+
+    // Создаем структурированную ошибку для лучшей обработки на фронтенде
+    const structuredError = {
+      apiError: {
+        message: error?.response?.data?.message || error?.message || 'Ошибка при расчете плана запасов',
+        status: error?.response?.status,
+        details: error?.response?.data?.error || error?.response?.data || 'Неизвестная ошибка',
+        suggestion: 'Проверьте подключение к серверу и правильность данных',
+      }
+    };
+
+    throw structuredError;
   }
 };
 
-// Создать план запасов
+//Создать план запасов
+
 export const createInventoryPlan = async (data: {
   subdivisionId: number;
   materialId: number;
-  date: string;
+  date: string; // Формат: "YYYY-MM-DD"
   quantity: number;
 }): Promise<InventoryPlanResponse> => {
   try {
+    console.log('Создание плана запасов:', data);
     const response = await request<InventoryPlanResponse>(`${API_BASE}/InventoryPlans`, {
       method: 'POST',
       data,
     });
+    console.log('План запасов создан успешно:', response);
     return response;
   } catch (error) {
     console.error('Ошибка при создании плана запасов:', error);
@@ -138,12 +140,15 @@ export const createInventoryPlan = async (data: {
   }
 };
 
-// Удалить план запасов
+//Удалить план запасов
+
 export const deleteInventoryPlan = async (id: number): Promise<void> => {
   try {
+    console.log('Удаление плана запасов с ID:', id);
     await request(`${API_BASE}/InventoryPlans/${id}`, {
       method: 'DELETE',
     });
+    console.log('План запасов успешно удален');
   } catch (error) {
     console.error('Ошибка при удалении плана запасов:', error);
     throw error;
@@ -151,11 +156,14 @@ export const deleteInventoryPlan = async (id: number): Promise<void> => {
 };
 
 // Получить план запасов по ID
+ 
 export const getInventoryPlanById = async (id: number): Promise<InventoryPlanResponse> => {
   try {
+    console.log('Запрос плана запасов по ID:', id);
     const response = await request<InventoryPlanResponse>(`${API_BASE}/InventoryPlans/${id}`, {
       method: 'GET',
     });
+    console.log('План запасов получен:', response);
     return response;
   } catch (error) {
     console.error('Ошибка при получении плана запасов по ID:', error);
@@ -163,12 +171,15 @@ export const getInventoryPlanById = async (id: number): Promise<InventoryPlanRes
   }
 };
 
-// Получить список подразделений
+//Получить список подразделений
+
 export const getSubdivisions = async (): Promise<Subdivision[]> => {
   try {
-    const response = await request<Subdivision[]>(`${API_BASE}/Subdivisions/getAll`, {
-      method: 'POST',
+    console.log('Запрос списка подразделений...');
+    const response = await request<Subdivision[]>(`${API_BASE}/InventoryPlans/subdivisions`, {
+      method: 'GET',
     });
+    console.log('Подразделения получены:', response?.length || 0, 'записей');
     return response || [];
   } catch (error) {
     console.error('Ошибка при получении подразделений:', error);
@@ -176,12 +187,15 @@ export const getSubdivisions = async (): Promise<Subdivision[]> => {
   }
 };
 
-// Получить список материалов
+//Получить список материалов
+
 export const getMaterials = async (): Promise<Material[]> => {
   try {
-    const response = await request<Material[]>(`${API_BASE}/Materials`, {
+    console.log('Запрос списка материалов...');
+    const response = await request<Material[]>(`${API_BASE}/InventoryPlans/materials`, {
       method: 'GET',
     });
+    console.log('Материалы получены:', response?.length || 0, 'записей');
     return response || [];
   } catch (error) {
     console.error('Ошибка при получении материалов:', error);
