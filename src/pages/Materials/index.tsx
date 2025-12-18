@@ -15,6 +15,8 @@ import { request } from '@umijs/max';
 import type { MaterialDto } from '@/models/material';
 import { MaterialType, MaterialTypeLabels } from '@/models/material';
 
+
+
 const MaterialsPage: React.FC = () => {
   const [materials, setMaterials] = useState<MaterialDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);

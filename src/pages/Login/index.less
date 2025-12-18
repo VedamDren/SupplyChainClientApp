@@ -1,0 +1,61 @@
+.container {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.logoContainer {
+  text-align: center;
+  margin-bottom: 30px;
+  
+  .title {
+    color: white !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .subtitle {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 16px;
+  }
+}
+
+.card {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border: none !important;
+  
+  :global {
+    .ant-card-head {
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .ant-card-body {
+      padding: 32px;
+    }
+  }
+}
+
+.loginButton {
+  height: 48px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  margin-top: 10px;
+}
+
+.registerLink {
+  margin-bottom: 0 !important;
+  text-align: center;
+  
+  :global {
+    .ant-form-item-control-input-content {
+      display: flex;
+      justify-content: center;
+    }
+  }
+}
+
+.footer {
+  text-align: center;
+  margin-top: 24px;
+  color: rgba(255, 255, 255, 0.7) !important;
+}

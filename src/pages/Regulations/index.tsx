@@ -10,6 +10,9 @@ import {
   message,
   Popconfirm,
   Space,
+  Card,
+  Row,
+  Col,
 } from 'antd';
 import type { TableProps } from 'antd';
 import { request } from '@umijs/max';
@@ -28,6 +31,11 @@ const RegulationsPage: React.FC = () => {
   const [editingRegulation, setEditingRegulation] = useState<RegulationDto | null>(null);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+
+  // Состояния для фильтров
+  const [searchDate, setSearchDate] = useState<dayjs.Dayjs | null>(null);
+  const [searchSubdivision, setSearchSubdivision] = useState<number | null>(null);
+  const [searchMaterial, setSearchMaterial] = useState<number | null>(null);
 
   useEffect(() => {
     loadRegulations();
@@ -71,6 +79,43 @@ const RegulationsPage: React.FC = () => {
     }
   };
 
+  // Функция для применения фильтров
+  const applyFilters = () => {
+    let filteredData = [...regulations];
+
+    if (searchDate) {
+      const targetMonth = searchDate.month();
+      const targetYear = searchDate.year();
+      
+      filteredData = filteredData.filter(regulation => {
+        if (!regulation.date) return false;
+        const regulationDate = dayjs(regulation.date);
+        return regulationDate.month() === targetMonth && regulationDate.year() === targetYear;
+      });
+    }
+
+    if (searchSubdivision) {
+      filteredData = filteredData.filter(regulation => 
+        regulation.subdivisionId === searchSubdivision
+      );
+    }
+
+    if (searchMaterial) {
+      filteredData = filteredData.filter(regulation => 
+        regulation.materialId === searchMaterial
+      );
+    }
+
+    return filteredData;
+  };
+
+  // Функция для сброса фильтров
+  const resetFilters = () => {
+    setSearchDate(null);
+    setSearchSubdivision(null);
+    setSearchMaterial(null);
+  };
+
   const handleAdd = () => {
     setEditingRegulation(null);
     setIsModalOpen(true);
@@ -78,9 +123,8 @@ const RegulationsPage: React.FC = () => {
   };
 
   const handleEdit = (record: RegulationDto) => {
-    console.log('Editing record:', record); // Отладка
+    console.log('Editing record:', record);
     
-    // Проверяем, что record не пустой и содержит необходимые данные
     if (!record || !record.id) {
       message.error('Не удалось загрузить данные для редактирования');
       return;
@@ -88,7 +132,6 @@ const RegulationsPage: React.FC = () => {
     
     setEditingRegulation(record);
     
-    // Используем setTimeout для гарантии, что форма уже отрендерена
     setTimeout(() => {
       try {
         form.setFieldsValue({
@@ -122,16 +165,12 @@ const RegulationsPage: React.FC = () => {
     console.log('Form values:', values);
     
     try {
-      // Проверяем, что все обязательные поля заполнены
       if (!values.SubdivisionId || !values.MaterialId || !values.Date || !values.DaysCount) {
         message.error('Заполните все обязательные поля');
         return;
       }
 
-      // Преобразуем DaysCount в число
       const daysCount = Number(values.DaysCount);
-      
-      // Правильное форматирование даты с использованием dayjs
       const formattedDate = values.Date ? values.Date.format('YYYY-MM-DD') : null;
       
       const requestData = {
@@ -144,7 +183,6 @@ const RegulationsPage: React.FC = () => {
       console.log('Sending data:', requestData);
 
       if (editingRegulation) {
-        // Для редактирования используем правильный endpoint
         await request(`/api/Regulations/${editingRegulation.id}`, {
           method: 'PUT',
           data: requestData,
@@ -191,7 +229,6 @@ const RegulationsPage: React.FC = () => {
     }
   };
 
-  // Функция для форматирования даты
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Не указана';
     try {
@@ -201,7 +238,6 @@ const RegulationsPage: React.FC = () => {
     }
   };
 
-  // Валидатор для проверки положительного числа
   const validateDaysCount = (_: any, value: string) => {
     if (!value) {
       return Promise.reject(new Error('Введите количество дней'));
@@ -272,8 +308,8 @@ const RegulationsPage: React.FC = () => {
           <Button 
             type="link" 
             onClick={(e) => {
-              e.preventDefault(); // Предотвращаем поведение по умолчанию
-              e.stopPropagation(); // Останавливаем всплытие
+              e.preventDefault();
+              e.stopPropagation();
               handleEdit(record);
             }}
           >
@@ -289,8 +325,8 @@ const RegulationsPage: React.FC = () => {
               type="link" 
               danger
               onClick={(e) => {
-                e.preventDefault(); // Предотвращаем поведение по умолчанию
-                e.stopPropagation(); // Останавливаем всплытие
+                e.preventDefault();
+                e.stopPropagation();
               }}
             >
               Удалить
@@ -301,8 +337,76 @@ const RegulationsPage: React.FC = () => {
     },
   ];
 
+  const filteredRegulations = applyFilters();
+
   return (
     <div>
+      {/* Панель поиска и фильтров */}
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={16} align="middle">
+          <Col xs={24} sm={8}>
+            <Form.Item label="Дата (месяц)">
+              <DatePicker 
+                picker="month" 
+                format="MM.YYYY"
+                style={{ width: '100%' }}
+                placeholder="Выберите месяц для поиска"
+                value={searchDate}
+                onChange={setSearchDate}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Form.Item label="Подразделение">
+              <Select 
+                placeholder="Выберите подразделение"
+                value={searchSubdivision}
+                onChange={setSearchSubdivision}
+                allowClear
+              >
+                {subdivisions.map(subdivision => (
+                  <Option key={subdivision.id} value={subdivision.id}>
+                    {subdivision.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Form.Item label="Материал">
+              <Select 
+                placeholder="Выберите материал"
+                value={searchMaterial}
+                onChange={setSearchMaterial}
+                allowClear
+              >
+                {materials.map(material => (
+                  <Option key={material.id} value={material.id}>
+                    {material.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <Space>
+              <Button 
+                type="primary" 
+                onClick={resetFilters}
+                disabled={!searchDate && !searchSubdivision && !searchMaterial}
+              >
+                Сбросить фильтры
+              </Button>
+              <span>
+                Найдено записей: {filteredRegulations.length}
+              </span>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
+
       <Button
         type="primary"
         onClick={handleAdd}
@@ -313,7 +417,7 @@ const RegulationsPage: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={regulations}
+        dataSource={filteredRegulations}
         rowKey="id"
         loading={loading}
         scroll={{ x: 800 }}
