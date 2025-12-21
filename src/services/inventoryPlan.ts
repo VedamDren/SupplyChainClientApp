@@ -32,6 +32,7 @@ export interface InventoryCalculationResult {
   message?: string;
   subdivisionName?: string;
   materialName?: string;
+  transferPlan?: number; // Добавляем поле для плана списания сырья
 }
 
 export interface Subdivision {
@@ -46,30 +47,14 @@ export interface Material {
   type?: string;
 }
 
-//Сервис для работы с планами запасов
+// Специализированные методы расчета для разных типов материалов и подразделений
 
-//Получить все планы запасов (GET метод)
- 
-export const getInventoryPlans = async (): Promise<InventoryPlanResponse[]> => {
-  try {
-    console.log('Запрос всех планов запасов...');
-    const response = await request<InventoryPlanResponse[]>(`${API_BASE}/InventoryPlans`, {
-      method: 'GET',
-    });
-    console.log('Планы запасов получены:', response?.length || 0, 'записей');
-    return response || [];
-  } catch (error) {
-    console.error('Ошибка при получении планов запасов:', error);
-    throw error;
-  }
-};
-
- //Рассчитать план запасов
+// 1. УНИВЕРСАЛЬНЫЙ РАСЧЕТ (автоматически определяет тип)
 export const calculateInventoryPlan = async (
   data: InventoryCalculationRequest
 ): Promise<InventoryCalculationResult> => {
   try {
-    console.log('Отправка запроса на расчет плана запасов:', {
+    console.log('Отправка запроса на универсальный расчет плана запасов:', {
       ...data,
       requestUrl: `${API_BASE}/InventoryPlans/calculate`,
     });
@@ -79,11 +64,6 @@ export const calculateInventoryPlan = async (
       throw new Error('Не все обязательные поля заполнены');
     }
 
-    // Формируем полный URL для диагностики
-    const fullUrl = `${window.location.origin}${API_BASE}/InventoryPlans/calculate`;
-    console.log('Полный URL запроса:', fullUrl);
-
-    // Отправляем запрос
     const response = await request<InventoryCalculationResult>(`${API_BASE}/InventoryPlans/calculate`, {
       method: 'POST',
       data,
@@ -93,16 +73,11 @@ export const calculateInventoryPlan = async (
       },
     });
 
-    console.log('Успешный ответ от сервера расчета:', response);
+    console.log('Универсальный расчет выполнен успешно:', response);
     return response;
     
   } catch (error: any) {
-    console.error('Детали ошибки расчета плана запасов:');
-    console.error('Тип ошибки:', error?.constructor?.name);
-    console.error('Сообщение:', error?.message);
-    console.error('Статус:', error?.response?.status);
-    console.error('Данные ошибки:', error?.response?.data);
-    console.error('Полная ошибка:', error);
+    console.error('Детали ошибки универсального расчета:', error);
 
     // Создаем структурированную ошибку для лучшей обработки на фронтенде
     const structuredError = {
@@ -118,8 +93,141 @@ export const calculateInventoryPlan = async (
   }
 };
 
-//Создать план запасов
+// 2. СПЕЦИАЛИЗИРОВАННЫЙ РАСЧЕТ ДЛЯ ТОРГОВЫХ ПОДРАЗДЕЛЕНИЙ
+export const calculateTradingInventoryPlan = async (
+  data: InventoryCalculationRequest
+): Promise<InventoryCalculationResult> => {
+  try {
+    console.log('Отправка запроса на расчет для торгового подразделения:', data);
 
+    if (!data.subdivisionId || !data.materialId || !data.date) {
+      throw new Error('Не все обязательные поля заполнены');
+    }
+
+    const response = await request<InventoryCalculationResult>(`${API_BASE}/InventoryPlans/calculate-trading`, {
+      method: 'POST',
+      data,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    console.log('Расчет для торгового подразделения выполнен успешно:', response);
+    return response;
+    
+  } catch (error: any) {
+    console.error('Детали ошибки расчета для торгового подразделения:', error);
+
+    const structuredError = {
+      apiError: {
+        message: error?.response?.data?.message || error?.message || 'Ошибка при расчете плана запасов для торгового подразделения',
+        status: error?.response?.status,
+        details: error?.response?.data?.error || error?.response?.data || 'Неизвестная ошибка',
+        suggestion: 'Убедитесь, что выбрано торговое подразделение и есть план продаж',
+      }
+    };
+
+    throw structuredError;
+  }
+};
+
+// 3. СПЕЦИАЛИЗИРОВАННЫЙ РАСЧЕТ ДЛЯ ПРОИЗВОДСТВЕННЫХ ПОДРАЗДЕЛЕНИЙ (Готовая продукция)
+export const calculateProductionInventoryPlan = async (
+  data: InventoryCalculationRequest
+): Promise<InventoryCalculationResult> => {
+  try {
+    console.log('Отправка запроса на расчет для производственного подразделения:', data);
+
+    if (!data.subdivisionId || !data.materialId || !data.date) {
+      throw new Error('Не все обязательные поля заполнены');
+    }
+
+    const response = await request<InventoryCalculationResult>(`${API_BASE}/InventoryPlans/calculate-production`, {
+      method: 'POST',
+      data,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    console.log('Расчет для производственного подразделения выполнен успешно:', response);
+    return response;
+    
+  } catch (error: any) {
+    console.error('Детали ошибки расчета для производственного подразделения:', error);
+
+    const structuredError = {
+      apiError: {
+        message: error?.response?.data?.message || error?.message || 'Ошибка при расчете плана запасов для производственного подразделения',
+        status: error?.response?.status,
+        details: error?.response?.data?.error || error?.response?.data || 'Неизвестная ошибка',
+        suggestion: 'Убедитесь, что выбрано производственное подразделение и материал является готовой продукцией',
+      }
+    };
+
+    throw structuredError;
+  }
+};
+
+// 4. СПЕЦИАЛИЗИРОВАННЫЙ РАСЧЕТ ДЛЯ СЫРЬЯ
+export const calculateRawMaterialInventoryPlan = async (
+  data: InventoryCalculationRequest
+): Promise<InventoryCalculationResult> => {
+  try {
+    console.log('Отправка запроса на расчет для сырья:', data);
+
+    if (!data.subdivisionId || !data.materialId || !data.date) {
+      throw new Error('Не все обязательные поля заполнены');
+    }
+
+    const response = await request<InventoryCalculationResult>(`${API_BASE}/InventoryPlans/calculate-raw-material`, {
+      method: 'POST',
+      data,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    console.log('Расчет для сырья выполнен успешно:', response);
+    return response;
+    
+  } catch (error: any) {
+    console.error('Детали ошибки расчета для сырья:', error);
+
+    const structuredError = {
+      apiError: {
+        message: error?.response?.data?.message || error?.message || 'Ошибка при расчете плана запасов по сырью',
+        status: error?.response?.status,
+        details: error?.response?.data?.error || error?.response?.data || 'Неизвестная ошибка',
+        suggestion: 'Убедитесь, что материал является сырьем и есть план списания сырья',
+      }
+    };
+
+    throw structuredError;
+  }
+};
+
+// Существующие методы остаются без изменений
+
+// Получить все планы запасов (GET метод)
+export const getInventoryPlans = async (): Promise<InventoryPlanResponse[]> => {
+  try {
+    console.log('Запрос всех планов запасов...');
+    const response = await request<InventoryPlanResponse[]>(`${API_BASE}/InventoryPlans`, {
+      method: 'GET',
+    });
+    console.log('Планы запасов получены:', response?.length || 0, 'записей');
+    return response || [];
+  } catch (error) {
+    console.error('Ошибка при получении планов запасов:', error);
+    throw error;
+  }
+};
+
+// Создать план запасов
 export const createInventoryPlan = async (data: {
   subdivisionId: number;
   materialId: number;
@@ -140,8 +248,7 @@ export const createInventoryPlan = async (data: {
   }
 };
 
-//Удалить план запасов
-
+// Удалить план запасов
 export const deleteInventoryPlan = async (id: number): Promise<void> => {
   try {
     console.log('Удаление плана запасов с ID:', id);
@@ -156,7 +263,6 @@ export const deleteInventoryPlan = async (id: number): Promise<void> => {
 };
 
 // Получить план запасов по ID
- 
 export const getInventoryPlanById = async (id: number): Promise<InventoryPlanResponse> => {
   try {
     console.log('Запрос плана запасов по ID:', id);
@@ -171,8 +277,7 @@ export const getInventoryPlanById = async (id: number): Promise<InventoryPlanRes
   }
 };
 
-//Получить список подразделений
-
+// Получить список подразделений
 export const getSubdivisions = async (): Promise<Subdivision[]> => {
   try {
     console.log('Запрос списка подразделений...');
@@ -187,8 +292,7 @@ export const getSubdivisions = async (): Promise<Subdivision[]> => {
   }
 };
 
-//Получить список материалов
-
+// Получить список материалов
 export const getMaterials = async (): Promise<Material[]> => {
   try {
     console.log('Запрос списка материалов...');

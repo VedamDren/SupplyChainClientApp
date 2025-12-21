@@ -1,5 +1,3 @@
-// Модели для плана продаж
-
 // Элемент плана продаж
 export interface SalesPlanItem {
   id: number;

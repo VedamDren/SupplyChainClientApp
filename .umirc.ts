@@ -24,6 +24,9 @@ export default defineConfig({
     { path: '/supplySources', component: '@/pages/SupplySources/index' },
     { path: '/inventoryPlan', component: '@/pages/InventoryPlan/index' },
     { path: '/transferPlan', component: '@/pages/TransferPlan/index' },
+    { path: '/productionPlan', component: '@/pages/ProductionPlan/index' },
+    { path: '/RawMaterialWriteOff', component: '@/pages/RawMaterialWriteOff/index' },
+    { path: '/RawMaterialPurchase', component: '@/pages/RawMaterialPurchase/index' },
   ],
   npmClient: 'npm',
 });
