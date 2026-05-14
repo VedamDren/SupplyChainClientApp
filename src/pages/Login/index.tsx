@@ -30,10 +30,17 @@ const LoginPage: React.FC = () => {
         message.success('Вход выполнен успешно');
         history.push('/'); // Перенаправляем на главную
       } else {
-        message.error(response.message || 'Ошибка входа');
+        // НОВОЕ: при неверных учётных данных (status !== 0 или нет токена) показываем конкретное сообщение
+        message.error('Логин или пароль введены с ошибкой');
       }
     } catch (error: any) {
-      // Ошибка уже обработана в request интерцепторе
+      // НОВОЕ: если сервер вернул ошибку аутентификации (401), выводим то же сообщение
+      if (error?.response?.status === 401) {
+        message.error('Логин или пароль введены с ошибкой');
+      } else {
+        // НОВОЕ: для остальных ошибок (сеть, сервер) можно показать общее сообщение
+        message.error('Ошибка соединения с сервером');
+      }
       console.error('Login error:', error);
     } finally {
       setLoading(false);
@@ -108,7 +115,7 @@ const LoginPage: React.FC = () => {
               <Form.Item
                 name="login"
                 label="Логин"
-                rules={[{ required: true, message: 'Пожалуйста, введите логин!' }]}
+                rules={[{ required: true, message: 'Пожалуйста, введите логин! Внимание! Учитывается вехрний и нижний регистр!' }]}
               >
                 <Input 
                   prefix={<UserOutlined />} 

@@ -65,9 +65,9 @@ const App: React.FC = () => {
   function getSelectedKey(path: string): string {
     const pathMap: Record<string, string> = {
       '/': 'home',
-      '/inventoryPlan': '1',
-      '/transferPlan': '2',
-      '/salesPlan': '3',
+      '/salesPlan': '1',
+      '/inventoryPlan': '2',
+      '/transferPlan': '3',
       '/productionPlan': '4',
       '/rawMaterialWriteOff': '11',
       '/rawMaterialPurchase': '12',
@@ -87,13 +87,13 @@ const App: React.FC = () => {
       case 'home':
         history.push('/');
         break;
-      case '1':
+      case '2':
         history.push('/inventoryPlan');
         break;
-      case '2':
-        history.push('/transferPlan'); // Навигация на план перемещений
-        break;
       case '3':
+        history.push('/transferPlan'); 
+        break;
+      case '1':
         history.push('/salesPlan');
         break;
       case '4':
@@ -167,9 +167,9 @@ const App: React.FC = () => {
   // Элементы основного меню - обновляем для плана перемещений
   const items: MenuItem[] = [
     getItem('Планы', 'sub1', <FolderOpenOutlined />, [
-      getItem('План запасов', '1'),
-      getItem('План перемещений', '2'), //Добавиление иконки для план перемещений <SwapOutlined /> пока что отказался, если придумаю ещё иконки может вернусь к этом
-      getItem('План продаж', '3'),
+      getItem('План продаж', '1'),
+      getItem('План запасов', '2'),
+      getItem('План перемещений', '3'), 
       getItem('План производства', '4'),
       getItem('План списания сырья в производство', '11'),
       getItem('План закупа сырья', '12'),
@@ -183,14 +183,14 @@ const App: React.FC = () => {
     ]),
   ];
 
-  // Функция для получения хлебных крошек - добавляем TransferPlan
+  // Функция для получения хлебных крошек 
   const getBreadcrumbItems = () => {
     const breadcrumbMap: Record<string, { title: string }[]> = {
       '/': [{ title: 'Главная' }],
+      '/salesPlan': [{ title: 'Планы' }, { title: 'План продаж' }],
       '/inventoryPlan': [{ title: 'Планы' }, { title: 'План запасов' }],
       '/transferPlan': [{ title: 'Планы' }, { title: 'План перемещений' }],
       '/transferPlan/docs': [{ title: 'Планы' }, { title: 'План перемещений' }, { title: 'Документация' }],
-      '/salesPlan': [{ title: 'Планы' }, { title: 'План продаж' }],
       '/productionPlan': [{ title: 'Планы' }, { title: 'План производства' }],
       '/rawMaterialWriteOff': [{ title: 'Планы' }, { title: 'План списания сырья' }],
       '/rawMaterialPurchase': [{ title: 'Планы' }, { title: 'План закупа сырья' }],
@@ -205,14 +205,14 @@ const App: React.FC = () => {
     return breadcrumbMap[currentPath] || [{ title: 'Главная' }];
   };
 
-  // Функция для получения заголовка страницы - добавляем TransferPlan
+  // Функция для получения заголовка страницы
   const getPageTitle = () => {
     const titleMap: Record<string, string> = {
       '/': 'Главная',
+      '/salesPlan': 'План продаж',
       '/inventoryPlan': 'План запасов',
       '/transferPlan': 'План перемещений',
       '/transferPlan/docs': 'Документация по плану перемещений',
-      '/salesPlan': 'План продаж',
       '/productionPlan': 'План производства',
       '/rawMaterialWriteOff': 'План списания сырья в производство',
       '/rawMaterialPurchase': 'План закупа сырья',

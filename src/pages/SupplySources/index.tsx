@@ -191,6 +191,8 @@ const SupplySourcesPage: React.FC = () => {
         title="Источники поставок" 
         extra={
           <Select value={year} onChange={setYear} style={{ width: 120 }}>
+            <Option value={2023}>2023</Option>
+            <Option value={2024}>2024</Option>
             <Option value={2025}>2025</Option>
             <Option value={2026}>2026</Option>
             <Option value={2027}>2027</Option>

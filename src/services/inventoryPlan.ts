@@ -32,7 +32,7 @@ export interface InventoryCalculationResult {
   message?: string;
   subdivisionName?: string;
   materialName?: string;
-  transferPlan?: number; // Добавляем поле для плана списания сырья
+  transferPlan?: number;
 }
 
 export interface Subdivision {

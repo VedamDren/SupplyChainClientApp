@@ -30,49 +30,6 @@ const HomePage: React.FC = () => {
       <Title level={2} style={{ marginBottom: 24 }}>
         Добро пожаловать в систему управления цепочками поставок
       </Title>
-      
-      <Text type="secondary" style={{ display: 'block', marginBottom: 32 }}>
-        Используйте меню слева для навигации по разделам системы
-      </Text>
-
-      <Row gutter={[16, 16]} style={{ marginBottom: 32 }}>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card hoverable onClick={() => navigateTo('/materials')}>
-            <Statistic
-              title="Материалы"
-              value={0}
-              prefix={<DatabaseOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card hoverable onClick={() => navigateTo('/subdivision')}>
-            <Statistic
-              title="Подразделения"
-              value={0}
-              prefix={<TeamOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card hoverable onClick={() => navigateTo('/salesPlan')}>
-            <Statistic
-              title="План продаж"
-              value={0}
-              prefix={<ShoppingOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card hoverable onClick={() => navigateTo('/productionPlan')}>
-            <Statistic
-              title="План производства"
-              value={0}
-              prefix={<LineChartOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       <Row gutter={[16, 16]}>
         <Col span={24}>
@@ -92,21 +49,31 @@ const HomePage: React.FC = () => {
                 //type="primary"
                 icon={<TeamOutlined />} 
                 block 
-                onClick={() => navigateTo('/SupplySources')}
+                onClick={() => navigateTo('/TechnologicalCard')}
                 size="large"
                 style={{ textAlign: 'left' }}
               >
-                Управление источниками поставок
+                Управление технологическими картами
               </Button>
               <Button 
                 //type="primary"
                 icon={<SettingOutlined />} 
                 block 
-                onClick={() => navigateTo('/regulations')}
+                onClick={() => navigateTo('/TransferPlan')}
                 size="large"
                 style={{ textAlign: 'left' }}
               >
                 Управление нормативами
+              </Button>
+                            <Button 
+                //type="primary"
+                icon={<SettingOutlined />} 
+                block 
+                onClick={() => navigateTo('/SupplySources')}
+                size="large"
+                style={{ textAlign: 'left' }}
+              >
+                Управление источниками поставок
               </Button>
             </Space>
           </Card>
